@@ -33,6 +33,40 @@ class ChatRequest(BaseModel):
     fingerprint: str
     
 # --- ROUTES ---
+@app.get("/api/user/stats")
+def get_user_stats(authorization: str = Header(None)):
+    """
+    Returns user stats including premium status
+    """
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    try:
+        token = authorization.split(" ")[1]
+        user = supabase.auth.get_user(token)
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        user_id = user.user.id
+        
+        # Fetch user stats
+        response = supabase.table("user_stats").select("*").eq("user_id", user_id).execute()
+        
+        if not response.data:
+            # User has no stats yet, return default
+            return {
+                "is_premium": False,
+                "prompt_count": 0
+            }
+        
+        stats = response.data[0]
+        return {
+            "is_premium": stats.get("is_premium", False),
+            "prompt_count": stats.get("prompt_count", 0)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/chat")
 def chat_endpoint(
     req: ChatRequest, 

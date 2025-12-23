@@ -6,6 +6,28 @@ export default function App() {
   const { messages, loading, sendMessage, limitReached, setLimitReached } = UseChat();
   const [input, setInput] = useState('');
   const [session, setSession] = useState(null); // Supabase Auth Session
+  const [isPremium, setIsPremium] = useState(false); // Track premium status
+
+  // Fetch user stats when session changes
+  useEffect(() => {
+    if (session?.access_token) {
+      fetch('http://localhost:8000/api/user/stats', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        setIsPremium(data.is_premium || false);
+      })
+      .catch(err => {
+        console.error('Failed to fetch user stats:', err);
+        setIsPremium(false);
+      });
+    } else {
+      setIsPremium(false);
+    }
+  }, [session]);
 
   useEffect(() => {
     // 1. Check active session on load
@@ -46,8 +68,10 @@ export default function App() {
         <div className="brand">
           <span>✨</span> GeminiBot
         </div>
-        {session ? (
+        {isPremium ? (
           <span className="limit-badge premium">Pro Member</span>
+        ) : session ? (
+          <span className="limit-badge">Free Member (8 prompts)</span>
         ) : (
           <span className="limit-badge">Guest Mode (5 Free)</span>
         )}

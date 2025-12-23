@@ -45,21 +45,55 @@ def check_and_increment_limit(fingerprint: str, ip: str, user_id: str = None):
 
     # --- SCENARIO B: Guest User ---
     else:
-        # 1. IP Abuse Check (Optional: Block if IP has > 50 prompts/hour globally)
-        # (Skipped for brevity, but you'd query a separate IP table here)
+        print(f"[DEBUG] Guest Access - Fingerprint: {fingerprint}, IP: {ip}")
+
+        # 1. IP Abuse Check
+        # Query IP table
+        ip_res = supabase.table("ip_abuse_monitor").select("*").eq("ip_address", ip).execute()
+        
+        if ip_res.data:
+            ip_record = ip_res.data[0]
+            if ip_record.get('is_blocked'):
+                print(f"[DEBUG] BLOCK: IP {ip} is flagged as blocked.")
+                raise HTTPException(status_code=403, detail="IP_BLOCKED")
+            
+            # Logic: If last request was > 1 hour ago, reset count? 
+            # For now, we will just simple increment to ensure data flows.
+            new_count = ip_record.get('request_count_1h', 0) + 1
+            
+            supabase.table("ip_abuse_monitor").update({
+                "request_count_1h": new_count,
+                "last_request_at": "now()" 
+            }).eq("ip_address", ip).execute()
+            print(f"[DEBUG] IP Monitor: Updated {ip} count to {new_count}")
+            
+        else:
+            # First time seeing IP
+            supabase.table("ip_abuse_monitor").insert({
+                "ip_address": ip,
+                "request_count_1h": 1,
+                "last_request_at": "now()"
+            }).execute()
+            print(f"[DEBUG] IP Monitor: Created new record for {ip}")
+
 
         # 2. Fingerprint Check
         response = supabase.table("guest_tracking").select("*").eq("fingerprint_id", fingerprint).execute()
         guest = response.data[0] if response.data else {"prompt_count": 0}
 
+        print(f"[DEBUG] Current Guest Count: {guest['prompt_count']}")
+
         if guest['prompt_count'] >= GUEST_LIMIT:
+            print(f"[DEBUG] Limit Reached for {fingerprint}")
             raise HTTPException(status_code=403, detail="GUEST_LIMIT_REACHED")
 
         # Increment
-        supabase.table("guest_tracking").upsert({
+        data = {
             "fingerprint_id": fingerprint,
             "prompt_count": guest['prompt_count'] + 1,
             "last_ip": ip
-        }).execute()
+        }
+        res = supabase.table("guest_tracking").upsert(data).execute()
+        print(f"[DEBUG] Upsert Result: {res}")
         return True
         
