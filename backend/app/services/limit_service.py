@@ -47,25 +47,36 @@ def check_and_increment_limit(fingerprint: str, ip: str, user_id: str = None):
     else:
         print(f"[DEBUG] Guest Access - Fingerprint: {fingerprint}, IP: {ip}")
 
-        # 1. IP Abuse Check
-        # Query IP table
+        # 1. IP Abuse Check (Strict Mode)
+        # Check total requests from this IP across ALL fingerprints in the last hour
+        # using the ip_abuse_monitor table we already set up.
+        
         ip_res = supabase.table("ip_abuse_monitor").select("*").eq("ip_address", ip).execute()
         
         if ip_res.data:
             ip_record = ip_res.data[0]
+            
+            # A. Hard Block Check
             if ip_record.get('is_blocked'):
-                print(f"[DEBUG] BLOCK: IP {ip} is flagged as blocked.")
                 raise HTTPException(status_code=403, detail="IP_BLOCKED")
             
-            # Logic: If last request was > 1 hour ago, reset count? 
-            # For now, we will just simple increment to ensure data flows.
-            new_count = ip_record.get('request_count_1h', 0) + 1
+            # B. Soft Limit Check (The "Browser Switcher" protection)
+            # If a single IP has made more than 10 requests in an hour (approx 2 full guest sessions + spares),
+            # we block them from starting *new* guest sessions, regardless of fingerprint.
+            current_ip_count = ip_record.get('request_count_1h', 0)
+            IP_GUEST_LIMIT = 10 
             
+            if current_ip_count >= IP_GUEST_LIMIT:
+                 print(f"[DEBUG] IP Limit Reached for {ip} (Used: {current_ip_count})")
+                 # We return a specific error so frontend can show "Too many requests from this network"
+                 raise HTTPException(status_code=403, detail="IP_LIMIT_REACHED")
+
+            # Increment IP Count
+            new_count = current_ip_count + 1
             supabase.table("ip_abuse_monitor").update({
                 "request_count_1h": new_count,
                 "last_request_at": "now()" 
             }).eq("ip_address", ip).execute()
-            print(f"[DEBUG] IP Monitor: Updated {ip} count to {new_count}")
             
         else:
             # First time seeing IP
@@ -74,7 +85,6 @@ def check_and_increment_limit(fingerprint: str, ip: str, user_id: str = None):
                 "request_count_1h": 1,
                 "last_request_at": "now()"
             }).execute()
-            print(f"[DEBUG] IP Monitor: Created new record for {ip}")
 
 
         # 2. Fingerprint Check

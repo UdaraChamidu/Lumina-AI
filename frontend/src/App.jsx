@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { UseChat } from './hooks/UseChat';
-import { Supabase } from './lib/Supabase'; // Your supabase config
+import { Supabase } from './lib/Supabase';
+import Sidebar from './components/Layout/Sidebar';
+import Header from './components/Layout/Header';
+import ChatArea from './components/Layout/ChatArea';
+import LoginModal from './components/LoginModal';
+import Button from './components/UI/Button';
 
 export default function App() {
-  const { messages, loading, sendMessage, limitReached, setLimitReached, promptCount, setPromptCount } = UseChat();
+  const { messages, loading, sendMessage, limitReached, setLimitReached, promptCount, setPromptCount, setMessages } = UseChat();
   const [input, setInput] = useState('');
-  const [session, setSession] = useState(null); // Supabase Auth Session
-  const [isPremium, setIsPremium] = useState(false); // Track premium status
+  const [session, setSession] = useState(null);
+  const [isPremium, setIsPremium] = useState(false);
 
   // Fetch user stats when session changes
   useEffect(() => {
@@ -25,37 +30,25 @@ export default function App() {
         console.error('Failed to fetch user stats:', err);
         setIsPremium(false);
       });
-    } else {
-      setIsPremium(false);
-      // Fetch guest stats if needed (using fingerprint from UseChat - easier to just rely on UseChat update for guests
-      // unless we add a specific guest-stats endpoint. For now, we can trust UseChat's initial state 
-      // OR we can make a lightweight call.
-      // Let's rely on the chat response updating it, OR adding a specific guest endpoint. 
-      // Actually, let's keep it simple: UseChat handles the session/fingerprint.
     }
   }, [session, setPromptCount]);
 
   useEffect(() => {
-    // 1. Check active session on load
     Supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) setLimitReached(false); // Remove limit if logged in
+      if (session) setLimitReached(false);
     });
 
-    // 2. Listen for changes (Login/Logout)
-    const {
-      data: { subscription },
-    } = Supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = Supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session) {
-        setLimitReached(false);
-      }
+      if (session) setLimitReached(false);
     });
 
     return () => subscription.unsubscribe();
   }, [setLimitReached]);
 
   const handleSend = () => {
+    if (!input.trim()) return;
     sendMessage(input, session?.access_token);
     setInput('');
   };
@@ -63,156 +56,85 @@ export default function App() {
   const handleLogin = async () => {
     await Supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: window.location.origin, // Redirects back to here after login
-      }
+      options: { redirectTo: window.location.origin }
     });
   };
 
   const handleLogout = async () => {
     await Supabase.auth.signOut();
     setSession(null);
-    setPromptCount(0); // Reset UI count
+    setPromptCount(0);
+    // Optional: clear chat on logout
+    window.location.reload(); 
+  };
+
+  // Mock New Chat (Clear messages)
+  const handleNewChat = () => {
+      window.location.reload(); // Simple way to reset state/uuid for now since we rely on mount effect
   };
 
   const maxLimit = session ? 8 : 5;
-  const remaining = Math.max(0, maxLimit - promptCount);
 
   return (
-    <div className="app-container">
-      {/* Header */}
-      <header className="app-header">
-        <div className="brand">
-          <span>✨</span> GeminiBot
-        </div>
-        
-        <div className="user-controls">
-          {session ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div className="user-badge member">
-                <div className="avatar-small">
-                   {session.user?.user_metadata?.avatar_url ? (
-                     <img src={session.user.user_metadata.avatar_url} alt="U" />
-                   ) : (
-                     "👤"
-                   )}
-                </div>
-                <div className="info">
-                  <span className="name">{isPremium ? "Pro Member" : "Free Member"}</span>
-                  <span className="count">{promptCount} / {maxLimit} used</span>
-                </div>
-              </div>
-              <button 
-                onClick={handleLogout} 
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '0.8rem',
-                  color: 'var(--text-muted)',
-                  cursor: 'pointer',
-                  textDecoration: 'underline'
-                }}
-              >
-                Sign Out
-              </button>
-            </div>
-          ) : (
-             <div className="user-badge guest">
-               <span className="icon">👾</span>
-               <div className="info">
-                 <span className="name">Guest Mode</span>
-                 <span className="count">{promptCount} / {maxLimit} used</span>
-               </div>
-             </div>
-          )}
-        </div>
-      </header>
+    <div className="flex h-screen bg-[#0F1016] text-white overflow-hidden font-sans">
+      {/* Sidebar (Desktop) */}
+      <Sidebar onNewChat={handleNewChat} />
 
-      {/* Chat Area */}
-      <div className="chat-area">
-        {messages.map((msg, idx) => (
-          <div key={idx} className={`message-row ${msg.role}`}>
-             {msg.role === 'ai' && <div className="avatar">AI</div>}
-             <div className={`message-bubble ${msg.role}`}>
-                {msg.content}
-             </div>
-          </div>
-        ))}
-        {loading && (
-          <div className="message-row ai">
-            <div className="avatar">AI</div>
-            <div className="message-bubble ai" style={{ color: 'var(--text-muted)' }}>
-              Thinking...
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col relative w-full">
+        <Header 
+            session={session} 
+            isPremium={isPremium} 
+            promptCount={promptCount} 
+            maxLimit={maxLimit}
+            onLogin={handleLogin}
+            onLogout={handleLogout}
+        />
+
+        <ChatArea messages={messages} loading={loading} />
+
+        {/* Input Area */}
+        <div className="p-4 md:p-6 bg-[#0F1016]/95 backdrop-blur border-t border-white/5 z-10">
+          <div className="max-w-4xl mx-auto">
+              <div className="relative bg-[#1E1F2E] border border-white/10 rounded-2xl shadow-lg flex items-center p-2 focus-within:ring-2 focus-within:ring-indigo-500/50 transition-all">
+                <input
+                    type="text"
+                    className="bg-transparent border-none outline-none flex-1 px-4 py-2 text-white placeholder-slate-500"
+                    placeholder="Message Lumina..."
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && !loading && handleSend()}
+                    disabled={limitReached || loading}
+                />
+                <Button 
+                    onClick={handleSend}
+                    disabled={limitReached || loading || !input.trim()}
+                    className={`rounded-xl w-10 h-10 !p-0 flex items-center justify-center transition-all ${input.trim() ? 'opacity-100 bg-indigo-600' : 'opacity-50 bg-slate-700'}`}
+                >
+                    {loading ? (
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    ) : (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    )}
+                </Button>
+            </div>
+            <div className="text-center mt-3 text-[10px] text-slate-600 font-medium uppercase tracking-widest">
+                Lumina AI can make mistakes. Check important info.
             </div>
           </div>
-        )}
+        </div>
+
+        {/* Modals */}
+        <LoginModal 
+            isOpen={limitReached} 
+            onClose={() => setLimitReached(false)} 
+            onLogin={handleLogin} 
+            reason="limit" 
+        />
       </div>
-
-      {/* Input Area */}
-      <div className="input-area">
-        <div className="input-container">
-          <input
-            type="text"
-            className="chat-input"
-            placeholder="Type your message..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            disabled={limitReached}
-          />
-          <button
-            onClick={handleSend}
-            disabled={limitReached || loading}
-            className="send-btn"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13"></line>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {/* Limit Reached Modal */}
-      {limitReached && (
-        <div className="modal-overlay">
-          <div className="modal-card">
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>
-              {session ? "🌟" : "🛑"}
-            </div>
-            <h2 className="modal-title">
-              {session ? "You've reached the limit!" : "Guest Limit Reached"}
-            </h2>
-            
-            {!session ? (
-              <>
-                <p className="modal-text">
-                  You've used all 5 free guest prompts. Create a free account to get <strong>3 more prompts</strong> instantly!
-                </p>
-                <div className="upsell-box">
-                  <span>🚀</span> Unlock 8 Total Prompts
-                </div>
-                <button onClick={handleLogin} className="btn-primary">
-                  Sign in with Google
-                </button>
-              </>
-            ) : (
-              <>
-                <p className="modal-text">
-                  You have used all 8 free prompts properly. We hope you enjoyed the demo!
-                </p>
-                <div className="upsell-box premium">
-                  <span>💎</span> Premium Plan Coming Soon
-                </div>
-              </>
-            )}
-
-            <button onClick={() => setLimitReached(false)} className="btn-outline">
-              Close (Read Only)
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

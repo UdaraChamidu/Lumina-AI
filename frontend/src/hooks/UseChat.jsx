@@ -87,5 +87,5 @@ export const UseChat = () => {
     }
   };
 
-  return { messages, loading, sendMessage, limitReached, setLimitReached, promptCount, setPromptCount };
+  return { messages, loading, sendMessage, limitReached, setLimitReached, promptCount, setPromptCount, setMessages };
 };
