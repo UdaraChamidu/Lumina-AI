@@ -35,10 +35,10 @@ def generate_gemini_response(session_id: str, user_message: str, system_instruct
     
     # 2. Initialize model with System Instruction if provided
     try:
-         model = genai.GenerativeModel('gemini-2.5-flash-lite', system_instruction=system_instruction)
+         model = genai.GenerativeModel('gemini-2.5-flash', system_instruction=system_instruction)
     except Exception as e:
          print(f"Model Init Warning: {e}")
-         model = genai.GenerativeModel('gemini-2.5-flash-lite')
+         model = genai.GenerativeModel('gemini-2.5-flash')
     
     # 3. Start chat with history
     chat = model.start_chat(history=history)
