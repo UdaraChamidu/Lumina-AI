@@ -5,10 +5,13 @@ import Button from './UI/Button';
 export default function LoginModal({ isOpen, onClose, onLogin, reason, isGuest = true, hasEmail = false }) {
   if (!isOpen) return null;
 
-  // content logic
-  const isUserLimit = reason === 'limit' && !isGuest;
-  // If we have an email (manual or user), and we hit the limit, it's the final limit (8 prompts)
-  const isFinalLimit = reason === 'limit' && hasEmail;
+  // Determine which limit was reached
+  // Guest without email: 5 prompts → ask for email
+  // User with email (manual or Google): 8 prompts → show beta message
+  const isFinalLimit = reason === 'limit' && hasEmail; // Has email and hit limit = 8 prompts reached
+  const isGuestLimit = reason === 'limit' && isGuest && !hasEmail; // Guest without email = 5 prompts reached
+  
+  console.log('[LoginModal] isGuest:', isGuest, 'hasEmail:', hasEmail, 'isFinalLimit:', isFinalLimit, 'isGuestLimit:', isGuestLimit);
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm animate-fadeIn">
@@ -17,30 +20,27 @@ export default function LoginModal({ isOpen, onClose, onLogin, reason, isGuest =
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-indigo-500/20 blur-[50px] rounded-full pointer-events-none"></div>
 
         <div className="relative text-5xl mb-6 transform hover:scale-110 transition-transform duration-300 cursor-default">
-           {isUserLimit || isFinalLimit ? '🚀' : (reason === 'limit' ? '🛑' : '✨')}
+           {isFinalLimit ? '🚀' : (isGuestLimit ? '🛑' : '✨')}
         </div>
         
         <h2 className="relative text-2xl font-bold text-slate-900 dark:text-white mb-3">
-          {isUserLimit || isFinalLimit
+          {isFinalLimit
             ? 'Premium Limit Reached' 
-            : (reason === 'limit' ? 'Guest Limit Reached' : 'Sign In Required')
+            : (isGuestLimit ? 'Guest Limit Reached' : 'Sign In Required')
           }
         </h2>
         
         <p className="relative text-slate-600 dark:text-slate-300 mb-8 leading-relaxed">
           {isFinalLimit 
              ? "This is a beta version. We are working on premium plans. Stay tuned!"
-             : (isUserLimit
-                ? "You've hit the limit for the free plan. Our Premium functionality with unlimited messages is coming soon!"
-                : (reason === 'limit' 
-                    ? "Free limit reached. Please provide your email to continue and get 3 more free prompts."
-                    : "Please sign in to access this feature.")
-               )
+             : (isGuestLimit
+                ? "Free limit reached. Please provide your email to continue and get 3 more free prompts."
+                : "Please sign in to access this feature.")
           }
         </p>
 
         {/* Email Input for Guest Limit (Only if not final limit) */}
-        {!isUserLimit && !isFinalLimit && reason === 'limit' && (
+        {isGuestLimit && (
            <div className="mb-6 space-y-3">
               <input 
                 type="email" 
@@ -75,7 +75,7 @@ export default function LoginModal({ isOpen, onClose, onLogin, reason, isGuest =
            </div>
         )}
 
-        {isUserLimit || isFinalLimit ? (
+        {isFinalLimit ? (
             <Button disabled className="relative w-full justify-center py-3 text-lg font-semibold opacity-80 cursor-not-allowed bg-slate-700 text-slate-300">
                Premium Coming Soon...
             </Button>

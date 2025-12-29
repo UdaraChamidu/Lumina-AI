@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { UseChat } from './hooks/UseChat';
+import { usePromptCount } from './hooks/usePromptCount';
 import { Supabase } from './lib/Supabase';
 import Sidebar from './components/Layout/Sidebar';
 import Header from './components/Layout/Header';
@@ -9,13 +10,20 @@ import Button from './components/UI/Button';
 import SettingsModal from './components/SettingsModal';
 
 export default function App() {
-  const { messages, loading, sendMessage, submitEmail, limitReached, setLimitReached, promptCount, setPromptCount, setMessages } = UseChat();
+  const { messages, loading, sendMessage, submitEmail, limitReached, setLimitReached, fingerprint, setMessages } = UseChat();
   const [input, setInput] = useState('');
   const [session, setSession] = useState(null);
   const [isPremium, setIsPremium] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState({ isOpen: false, tab: 'general' });
 
   const [manualEmail, setManualEmail] = useState(() => localStorage.getItem('guest_email') || null);
+
+  // Fetch prompt count from Supabase with real-time updates
+  const { promptCount, maxPrompts, loading: countLoading } = usePromptCount(
+    fingerprint,
+    session?.user?.id,
+    session
+  );
 
   // Fetch user stats when session changes
   // Fetch user stats when session changes (DISABLED: N8N manages DB/Logic)
@@ -54,22 +62,44 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, [setLimitReached]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
+    
+    // Check limits before sending
+    const isGuest = !session;
+    const hasEmailProvided = !!(session?.user?.email || manualEmail);
+    
+    // Guest without email: max 5 prompts
+    if (isGuest && !manualEmail && promptCount >= 5) {
+      console.log('[App] Guest limit reached (5 prompts), showing email modal');
+      setLimitReached(true);
+      return;
+    }
+    
+    // User with email (manual or logged in): max 8 prompts
+    if (hasEmailProvided && promptCount >= 8) {
+      console.log('[App] Final limit reached (8 prompts), showing beta modal');
+      setLimitReached(true);
+      return;
+    }
+    
     const email = session?.user?.email || manualEmail || "none";
     const userId = session?.user?.id || "none";
     
     // If we have a manual email but no userId, we are still anonymous but identified by email
-    sendMessage(input, session?.access_token, email, userId);
+    await sendMessage(input, session?.access_token, email, userId);
     setInput('');
+    
+    // No need to manually refetch - real-time subscription will update automatically
   };
 
   const handleLogin = async (emailInput = null) => {
     // If emailInput is provided, it's a manual guest email submission
     if (typeof emailInput === 'string' && emailInput.includes('@')) {
+        console.log('[App] Email provided by guest:', emailInput);
         setManualEmail(emailInput);
         localStorage.setItem('guest_email', emailInput);
-        setLimitReached(false);
+        setLimitReached(false); // Close modal and allow to continue
         
         // Immediate N8N Submission
         submitEmail(emailInput);
@@ -77,6 +107,7 @@ export default function App() {
     }
 
     // Otherwise, standard Google Login
+    console.log('[App] Initiating Google OAuth login');
     await Supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.origin }
@@ -86,7 +117,6 @@ export default function App() {
   const handleLogout = async () => {
     await Supabase.auth.signOut();
     setSession(null);
-    setPromptCount(0);
     // Optional: clear chat on logout
     window.location.reload(); 
   };
@@ -95,8 +125,6 @@ export default function App() {
   const handleNewChat = () => {
       window.location.reload(); // Simple way to reset state/uuid for now since we rely on mount effect
   };
-
-  const maxLimit = session ? 8 : 5;
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-[#0F1016] text-slate-900 dark:text-white overflow-hidden font-sans transition-colors duration-300">
@@ -112,7 +140,7 @@ export default function App() {
             session={session} 
             isPremium={isPremium} 
             promptCount={promptCount} 
-            maxLimit={maxLimit}
+            maxLimit={maxPrompts}
             onLogin={handleLogin}
             onLogout={handleLogout}
             onOpenProfile={() => setIsSettingsOpen({ isOpen: true, tab: 'profile' })}

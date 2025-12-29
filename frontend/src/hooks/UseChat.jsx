@@ -8,7 +8,6 @@ export const UseChat = () => {
   const [fingerprint, setFingerprint] = useState(null);
   const [sessionId, setSessionId] = useState(null);
   const [limitReached, setLimitReached] = useState(false);
-  const [promptCount, setPromptCount] = useState(0); // Track usage 
   const [ipAddress, setIpAddress] = useState(null);
 
   // 1. Initialize Fingerprint & Session on Mount
@@ -127,11 +126,6 @@ export const UseChat = () => {
             const emailSentKey = `email_sent_${userId}`;
             localStorage.setItem(emailSentKey, 'true');
           }
-
-          // Update prompt count
-          if (data.prompts_used !== undefined) {
-             setPromptCount(data.prompts_used);
-          }
           
           // Add AI Response
           const aiContent = data.response || data.output || data.reply || data.message;
@@ -181,7 +175,9 @@ export const UseChat = () => {
     }
   };
 
-  return { messages, loading, sendMessage, submitEmail, limitReached, setLimitReached, promptCount, setPromptCount, setMessages };
+  return { messages, loading, sendMessage, submitEmail, limitReached, setLimitReached, fingerprint, setMessages };
 };
+
+
 
 
