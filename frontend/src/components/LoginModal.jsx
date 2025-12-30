@@ -43,18 +43,9 @@ export default function LoginModal({ isOpen, onClose, onLogin, limitType = 'gues
             </Button>
         ) : (
             <>
-                <Button onClick={() => onLogin()} className="relative w-full justify-center py-3 text-lg font-semibold shadow-indigo-500/20 bg-indigo-600 hover:bg-indigo-700 text-white">
-                   Sign in with Google
-                </Button>
-
+                {/* Guest Limit: Manual Email Input */}
                 {isGuestLimit && (
-                   <div className="mt-6 space-y-3">
-                      <div className="relative flex items-center gap-4 py-2 mb-2">
-                         <div className="flex-1 h-px bg-slate-200 dark:bg-white/10"></div>
-                         <span className="text-xs text-slate-400 font-medium">OR</span>
-                         <div className="flex-1 h-px bg-slate-200 dark:bg-white/10"></div>
-                      </div>
-                      
+                   <div className="mb-6 space-y-3">
                       <input 
                         type="email" 
                         placeholder="Enter your email" 
@@ -76,7 +67,7 @@ export default function LoginModal({ isOpen, onClose, onLogin, limitType = 'gues
                               onLogin(emailInput.value);
                            }
                         }} 
-                        className="relative w-full justify-center py-3 text-lg font-semibold border border-indigo-500/30 hover:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+                        className="relative w-full justify-center py-3 text-lg font-semibold shadow-indigo-500/20 bg-indigo-600 hover:bg-indigo-700 text-white"
                       >
                         Continue with Email
                       </Button>

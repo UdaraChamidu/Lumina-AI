@@ -141,6 +141,7 @@ export default function App() {
       <div className="flex-1 flex flex-col relative w-full">
         <Header 
             session={session} 
+            manualEmail={manualEmail}
             isPremium={isPremium} 
             promptCount={promptCount} 
             maxLimit={maxPrompts}
