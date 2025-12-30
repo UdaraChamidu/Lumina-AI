@@ -113,8 +113,6 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'general',
                 </div>
             )}
 
-            
-
              {/* DATA TAB */}
              {activeTab === 'data' && (
                 <div className="space-y-6 animate-fadeIn">
