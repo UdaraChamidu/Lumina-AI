@@ -7,25 +7,24 @@ I have updated your `.env` file to include the `VITE_N8N_WEBHOOK_URL`.
 **Important**: When deploying to production, ensure your `.env` variables are correctly set. For a static build, these variables are **baked into the build** at build time. 
 Since I just ran the build, the `VITE_N8N_WEBHOOK_URL` and `VITE_SUPABASE` keys from your local `.env` are now in the `dist` files.
 
-## Deployment Steps
+## Automated Deployment (GitHub Actions)
+I have set up a GitHub Action to automatically deploy your changes whenever you push to the `main` branch.
 
-1.  **Log in to Cloudways**.
-2.  **Create a New Application**:
-    *   Select your Server.
-    *   Application Type: **Custom PHP** (or **Laravel** works too, but Custom PHP is cleaner for static sites).
-    *   Name your app (e.g., `LuminaChat`).
-3.  **Access File Manager (SFTP)**:
-    *   Use Master Credentials or App Credentials to log in via SFTP (FileZilla, Cyberduck, etc.).
-    *   Navigate to the `public_html` folder of your new application.
-4.  **Upload Files**:
-    *   Delete the default `index.php` (if any).
-    *   Upload **ALL** files and folders from your local `frontend/dist` folder to `public_html` on the server.
-    *   **Ensure `.htaccess` is uploaded**. This file is critical for handling page refreshes (SPA routing). I have already created it in your `dist` folder.
+### 1. Configure GitHub Secrets
+For this to work, you need to add your Cloudways SFTP credentials to your GitHub repository:
 
-## Links & Configuration
-You mentioned "add links in to .env folder".
-I have already extracted the `WEBHOOK_URL` to `.env`.
-If you have other links (e.g., a custom Domain, backend URL, etc.) that need to be configured, please let me know or add them to `.env` and run `npm run build` again before uploading.
+1.  Go to your GitHub Repository -> **Settings** -> **Secrets and variables** -> **Actions**.
+2.  Click **New repository secret**.
+3.  Add the following secrets:
+    *   `FTP_SERVER`: Your Cloudways Server IP address.
+    *   `FTP_USERNAME`: Your SFTP Username (Master or App credentials).
+    *   `FTP_PASSWORD`: Your SFTP Password.
 
-## Verification
-Visit your Cloudways Application URL. The app should load, and the chat should function correctly.
+### 2. Push to Deploy
+Once the secrets are set, any commit pushed to the `main` branch will trigger the **Deploy to Cloudways** workflow.
+
+- You can check the progress in the **Actions** tab of your GitHub repository.
+- The workflow builds your project (`npm run build`) and uploads the `dist` folder to `public_html`.
+
+### Note on Environment Variables
+Since you have un-ignored `.env` in your `.gitignore`, your environment variables (like `VITE_N8N_WEBHOOK_URL`) will be included in the repository and used during the build process on GitHub. **Ensure you do not commit sensitive real keys if you want to keep them private.** If you prefer to keep `.env` ignored, you should add your env variables as GitHub Secrets and map them in the `deploy.yml` file.
