@@ -40,5 +40,6 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local_path: './frontend/dist'
           remote_path: '/public_html'
-          sftp_args: '-o ConnectTimeout=5'
-          delete_remote_files: true
+          sftpArgs: '-o ConnectTimeout=5'
+          delete_remote_files: false
+          sftp_only: true
