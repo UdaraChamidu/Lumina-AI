@@ -17,8 +17,9 @@ For this to work, you need to add your Cloudways SFTP credentials to your GitHub
 2.  Click **New repository secret**.
 3.  Add the following secrets:
     *   `FTP_SERVER`: Your Cloudways Server IP address.
-    *   `FTP_USERNAME`: Your SFTP Username (Master or App credentials).
-    *   `FTP_PASSWORD`: Your SFTP Password.
+    *   `FTP_USERNAME`: Your **Application** Username (Recommended) or Master Username.
+        *   *Note: Using Application Credentials ensures you land directly in the correct folder so the deploy script works flawlessly.*
+    *   `FTP_PASSWORD`: Your **Application** Password.
 
 ### 2. Push to Deploy
 Once the secrets are set, any commit pushed to the `main` branch will trigger the **Deploy to Cloudways** workflow.

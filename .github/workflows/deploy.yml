@@ -32,16 +32,12 @@ jobs:
           # Otherwise, add secrets for env vars here if needed.
           CI: false
 
-      - name: 📂 Sync files (SFTP)
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      - name: 📂 Sync files (SFTP/SCP)
+        uses: appleboy/scp-action@v0.1.7
         with:
-          server: ${{ secrets.FTP_SERVER }}
+          host: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./frontend/dist/
-          server-dir: ./public_html/
-          protocol: futp
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
+          source: "frontend/dist/*"
+          target: "public_html"
+          strip_components: 2
