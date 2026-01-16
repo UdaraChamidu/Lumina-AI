@@ -32,12 +32,13 @@ jobs:
           # Otherwise, add secrets for env vars here if needed.
           CI: false
 
-      - name: 📂 Sync files (SFTP/SCP)
-        uses: appleboy/scp-action@v0.1.7
+      - name: 📂 Sync files (SFTP)
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          host: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
+          server: ${{ secrets.FTP_SERVER }}
           password: ${{ secrets.FTP_PASSWORD }}
-          source: "frontend/dist/*"
-          target: "public_html"
-          strip_components: 2
+          local_path: './frontend/dist'
+          remote_path: '/public_html'
+          sftp_args: '-o ConnectTimeout=5'
+          delete_remote_files: true
