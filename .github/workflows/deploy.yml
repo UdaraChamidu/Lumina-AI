@@ -18,11 +18,14 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
       - name: 📦 Install dependencies
+        working-directory: ./frontend
         run: npm ci
 
       - name: 🏗️ Build project
+        working-directory: ./frontend
         run: npm run build
         env:
           # If you are committing your .env file, these will be picked up automatically.
@@ -35,7 +38,7 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./dist/
+          local-dir: ./frontend/dist/
           server-dir: ./public_html/
           protocol: futp
           exclude: |
