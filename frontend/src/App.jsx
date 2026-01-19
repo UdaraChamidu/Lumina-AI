@@ -200,8 +200,8 @@ export default function App() {
                     )}
                 </Button>
             </div>
-            <div className="text-center mt-3 text-[10px] text-slate-600 font-medium uppercase tracking-widest">
-                Lumina AI can make mistakes. Check important info.
+            <div className="text-center mt-3 text-[10px] text-slate-500 font-medium tracking-wide px-4">
+                Lumina AI is an experimental assistant and can make mistakes. Please verify important medical information.
             </div>
           </div>
         </div>

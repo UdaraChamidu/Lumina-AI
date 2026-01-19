@@ -21,10 +21,15 @@ export default function ChatArea({ messages, loading, onSend }) {
              <div className="w-full max-w-4xl my-auto flex flex-col items-center">
                  <div className="text-6xl mb-6 grayscale hover:grayscale-0 transition-all duration-500 transform hover:scale-110 cursor-pointer p-4 pb-0 leading-normal">🩺</div>
                  <h3 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-violet-500 mb-3 px-4">Lumina Health Assistant</h3>
-                 <p className="text-slate-500 dark:text-slate-400 max-w-lg leading-relaxed mb-8 px-4 text-sm md:text-base">
+                 <p className="text-slate-500 dark:text-slate-400 max-w-lg leading-relaxed mb-6 px-4 text-sm md:text-base">
                     Your AI companion for medical insights and health advice. 
                     Ask me anything about symptoms, treatments, or general wellness.
                  </p>
+
+                 <div className="mb-8 px-4 py-2.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg text-xs md:text-sm text-amber-800 dark:text-amber-200 max-w-md mx-auto flex items-center gap-2">
+                    <span className="text-base">⚠️</span>
+                    <span><b>Important:</b> Lumina AI is experimental. Please verify all medical information with a doctor.</span>
+                 </div>
     
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 w-full px-2">
                     {sampleQuestions.map((q, idx) => (
