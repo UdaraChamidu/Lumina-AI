@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 export default function ChatArea({ messages, loading, onSend }) {
   const bottomRef = useRef(null);
@@ -28,7 +29,7 @@ export default function ChatArea({ messages, loading, onSend }) {
 
                  <div className="mb-8 px-4 py-2.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg text-xs md:text-sm text-amber-800 dark:text-amber-200 max-w-md mx-auto flex items-center gap-2">
                     <span className="text-base">⚠️</span>
-                    <span><b>Important:</b> Lumina AI is experimental. Please verify all medical information with a doctor.</span>
+                    <span>This AI provides home-based, general information only and is not a substitute for professional medical advice. <Link to="/disclaimer" className="underline hover:text-amber-900 dark:hover:text-amber-100 transition-colors">Read full disclaimer.</Link></span>
                  </div>
     
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 w-full px-2">
