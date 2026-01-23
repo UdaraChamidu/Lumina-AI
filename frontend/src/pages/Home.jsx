@@ -148,7 +148,7 @@ export default function Home() {
   };
 
   return (
-    <div className="fixed inset-0 flex bg-gray-50 dark:bg-[#0F1016] text-slate-900 dark:text-white overflow-hidden font-sans transition-colors duration-300">
+    <div className="flex w-full h-[100dvh] bg-gray-50 dark:bg-[#0F1016] text-slate-900 dark:text-white overflow-hidden font-sans transition-colors duration-300">
       {/* Sidebar (Desktop & Mobile) */}
       <Sidebar 
         onNewChat={handleNewChat} 
@@ -174,7 +174,7 @@ export default function Home() {
         <ChatArea messages={messages} loading={loading} onSend={handleSend} />
 
         {/* Input Area */}
-        <div className="p-4 md:p-6 bg-white/80 dark:bg-[#0F1016]/95 backdrop-blur border-t border-gray-200 dark:border-white/5 z-10 transition-colors duration-300">
+        <div className="p-4 md:p-6 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-white/80 dark:bg-[#0F1016]/95 backdrop-blur border-t border-gray-200 dark:border-white/5 z-10 transition-colors duration-300">
           <div className="max-w-6xl mx-auto">
               <div className="relative bg-gray-100 dark:bg-[#1E1F2E] border border-gray-200 dark:border-white/10 rounded-2xl shadow-lg flex items-center p-2 focus-within:ring-2 focus-within:ring-indigo-500/50 transition-all">
                 <input
