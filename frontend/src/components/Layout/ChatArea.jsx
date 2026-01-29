@@ -1,5 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function ChatArea({ messages, loading, onSend }) {
   const bottomRef = useRef(null);
@@ -60,12 +62,40 @@ export default function ChatArea({ messages, loading, onSend }) {
              </div>
 
              {/* BUBBLE */}
-             <div className={`relative px-6 py-4 rounded-2xl shadow-md text-[0.95rem] leading-relaxed transition-colors duration-300 ${
+            <div className={`relative px-6 py-4 rounded-2xl shadow-md text-[0.95rem] leading-relaxed transition-colors duration-300 ${
                  msg.role === 'user' 
                  ? 'bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-tr-sm' 
                  : 'bg-white dark:bg-[#1E1F2E] border border-gray-200 dark:border-white/5 text-slate-800 dark:text-slate-200 rounded-tl-sm'
              }`}>
-                {msg.content}
+                {msg.role === 'user' ? (
+                  msg.content
+                ) : (
+                  <ReactMarkdown 
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      ul: ({node, ...props}) => <ul className="list-disc list-outside ml-5 mb-3 space-y-1" {...props} />,
+                      ol: ({node, ...props}) => <ol className="list-decimal list-outside ml-5 mb-3 space-y-1" {...props} />,
+                      li: ({node, ...props}) => <li className="pl-1" {...props} />,
+                      p: ({node, ...props}) => <p className="mb-3 last:mb-0" {...props} />,
+                      strong: ({node, ...props}) => <strong className="font-bold text-indigo-700 dark:text-indigo-300" {...props} />,
+                      a: ({node, ...props}) => <a className="text-blue-500 hover:text-blue-600 underline" target="_blank" rel="noopener noreferrer" {...props} />,
+                      h1: ({node, ...props}) => <h1 className="text-xl font-bold mb-3 mt-4" {...props} />,
+                      h2: ({node, ...props}) => <h2 className="text-lg font-bold mb-2 mt-4" {...props} />,
+                      h3: ({node, ...props}) => <h3 className="text-md font-bold mb-2 mt-3" {...props} />,
+                      blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-indigo-400 pl-4 italic my-3 opacity-80" {...props} />,
+                      code: ({node, inline, ...props}) => 
+                        inline 
+                          ? <code className="bg-black/10 dark:bg-white/10 rounded px-1 py-0.5 text-[0.9em] font-mono" {...props} />
+                          : <pre className="bg-black/5 dark:bg-white/5 rounded-lg p-3 overflow-x-auto my-3 text-sm font-mono"><code {...props} /></pre>,
+                      hr: ({node, ...props}) => <hr className="my-4 border-black/10 dark:border-white/10" {...props} />,
+                      table: ({node, ...props}) => <div className="overflow-x-auto my-4"><table className="min-w-full divide-y divide-gray-300 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg" {...props} /></div>,
+                      th: ({node, ...props}) => <th className="px-3 py-2 bg-gray-50 dark:bg-white/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400" {...props} />,
+                      td: ({node, ...props}) => <td className="px-3 py-2 whitespace-nowrap text-sm border-t border-gray-100 dark:border-gray-800" {...props} />,
+                    }}
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
+                )}
              </div>
           </div>
         </div>
