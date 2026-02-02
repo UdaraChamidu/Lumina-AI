@@ -12,11 +12,13 @@ export default function ChatArea({ messages, loading, onSend }) {
 
   if (messages.length === 0) {
       const sampleQuestions = [
-          "What are the early symptoms of diabetes?",
-          "How can I relieve a migraine naturally?",
-          "What is the best diet for high blood pressure?",
-          "How much water should I drink daily?",
-          "What are the side effects of antibiotics?"
+          "What helps reduce joint stiffness and pain?",
+          "How can sciatic pain be managed naturally?",
+          "What helps relieve neck and shoulder tension?",
+          "How can muscle soreness be reduced at home?",
+          "What helps with burning or tingling nerve pain?",
+          "How can leg or foot nerve pain be eased naturally?",
+          "What helps reduce body pain in daily life?"
       ];
 
       return (
